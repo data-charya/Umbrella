@@ -4,42 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:weather/pages/week.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:location/location.dart';
 
 class Home extends StatefulWidget {
   @override
   _HomeState createState() => _HomeState();
 }
 
-// ignore: unused_element
-LocationData _currentPosition = '' as LocationData;
-Location location = Location();
-getLoc() async {
-  bool _serviceEnabled;
-  PermissionStatus _permissionGranted;
-
-  _serviceEnabled = await location.serviceEnabled();
-  if (!_serviceEnabled) {
-    _serviceEnabled = await location.requestService();
-    if (!_serviceEnabled) {
-      return;
-    }
-  }
-
-  _permissionGranted = await location.hasPermission();
-  if (_permissionGranted == PermissionStatus.denied) {
-    _permissionGranted = await location.requestPermission();
-    if (_permissionGranted != PermissionStatus.granted) {
-      return;
-    }
-  }
-
-  _currentPosition = await location.getLocation();
-  location.onLocationChanged.listen((LocationData currentLocation) {
-    print("${currentLocation.longitude} : ${currentLocation.longitude}");
-  });
-}
+final cityName = TextEditingController();
 
 var infos;
 double temp = 0;
@@ -49,12 +20,15 @@ var de;
 var img;
 var visibility;
 var wind;
-
+var city = 'Mangalore';
 var currDt;
 var day;
 var date;
 var month;
 var hour;
+var location_name;
+var lat;
+var long;
 
 var images = {
   'cloudy':
@@ -78,9 +52,17 @@ var images = {
 };
 
 class _HomeState extends State<Home> {
-  getData() async {
+  getData(String cityname) async {
+    String cityUrl =
+        "https://api.openweathermap.org/data/2.5/weather?q=${cityname}&appid=86a15e450b8914503ebb7ada1a767ade&units=imperial";
+    var data = await http.get(Uri.parse(cityUrl));
+
+    var infor = json.decode(data.body);
+
+    lat = infor['coord']['lat'];
+    long = infor['coord']['lon'];
     String myUrl =
-        "https://api.openweathermap.org/data/2.5/onecall?lat=12.9130&lon=74.8426&exclude=minutely,hourly&appid=86a15e450b8914503ebb7ada1a767ade&units=metric";
+        "https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${long}&exclude=minutely,hourly&appid=86a15e450b8914503ebb7ada1a767ade&units=metric";
     var req = await http.get(Uri.parse(myUrl));
     infos = json.decode(req.body);
 
@@ -150,14 +132,14 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    getData();
-    getLoc();
+    getData('Mangalore');
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     setState(() {
+      location_name = 'Location';
       currDt = DateTime.now();
       date = currDt.day;
       day = DateFormat('EEEE').format(currDt);
@@ -280,18 +262,135 @@ class _HomeState extends State<Home> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Icon(
-                                  Icons.location_pin,
-                                  color: Colors.white,
-                                  size: 30,
+                                SizedBox(
+                                  height: 20,
                                 ),
-                                Text(
-                                  'Mangalore',
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
+                                ElevatedButton(
+                                  style: ButtonStyle(
+                                    shape: MaterialStateProperty.all(
+                                      RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
+                                    backgroundColor: MaterialStateProperty
+                                        .resolveWith<Color>(
+                                      (Set<MaterialState> states) {
+                                        if (states
+                                            .contains(MaterialState.pressed))
+                                          return Colors.blueAccent;
+                                        return Colors.blue;
+                                        // Use the component's default.
+                                      },
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      location_name = city;
+                                    });
+                                    showModalBottomSheet<void>(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return Container(
+                                          height: 600,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: [
+                                                SizedBox(
+                                                  height: 20,
+                                                ),
+                                                Text(
+                                                  'Enter Location',
+                                                  style: GoogleFonts.nunito(
+                                                    fontSize: 30,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets
+                                                          .symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 20),
+                                                  child: Container(
+                                                    height: 80,
+                                                    child: TextField(
+                                                      controller: cityName,
+                                                      style: GoogleFonts.nunito(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                          color:
+                                                              Colors.black45),
+                                                      decoration:
+                                                          InputDecoration(
+                                                        fillColor: Colors.white,
+                                                        filled: true,
+                                                        border:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(30),
+                                                        ),
+                                                        hintText:
+                                                            'Enter City name',
+                                                        hintStyle:
+                                                            GoogleFonts.nunito(
+                                                          fontSize: 15,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: Colors.black,
+                                                        ),
+                                                        suffixIcon: IconButton(
+                                                          icon: Icon(
+                                                              Icons.search),
+                                                          onPressed: () {
+                                                            city =
+                                                                cityName.text;
+                                                            getData(city);
+                                                            setState(() {
+                                                              location_name =
+                                                                  city;
+                                                            });
+                                                          },
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        '${city.substring(0, 1).toUpperCase() + city.substring(1)}',
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Icon(
+                                        Icons.location_on_rounded,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -377,7 +476,7 @@ class _HomeState extends State<Home> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -407,9 +506,10 @@ class _HomeState extends State<Home> {
                   ),
                   onPressed: () {
                     Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Week()),
-                    );
+                        context,
+                        PageRouteBuilder(
+                            transitionDuration: Duration(milliseconds: 900),
+                            pageBuilder: (_, __, ___) => Week()));
                   },
                   child: Row(
                     children: [
