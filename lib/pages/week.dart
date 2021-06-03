@@ -46,8 +46,13 @@ class _WeekState extends State<Week> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
     getData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color.fromRGBO(0, 10, 24, 1),
       body: Column(

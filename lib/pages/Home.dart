@@ -5,10 +5,40 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:weather/pages/week.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:location/location.dart';
 
 class Home extends StatefulWidget {
   @override
   _HomeState createState() => _HomeState();
+}
+
+// ignore: unused_element
+LocationData _currentPosition = '' as LocationData;
+Location location = Location();
+getLoc() async {
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+
+  _serviceEnabled = await location.serviceEnabled();
+  if (!_serviceEnabled) {
+    _serviceEnabled = await location.requestService();
+    if (!_serviceEnabled) {
+      return;
+    }
+  }
+
+  _permissionGranted = await location.hasPermission();
+  if (_permissionGranted == PermissionStatus.denied) {
+    _permissionGranted = await location.requestPermission();
+    if (_permissionGranted != PermissionStatus.granted) {
+      return;
+    }
+  }
+
+  _currentPosition = await location.getLocation();
+  location.onLocationChanged.listen((LocationData currentLocation) {
+    print("${currentLocation.longitude} : ${currentLocation.longitude}");
+  });
 }
 
 var infos;
@@ -115,13 +145,13 @@ class _HomeState extends State<Home> {
         }
       },
     );
-
     return infos['name'];
   }
 
   @override
   void initState() {
     getData();
+    getLoc();
     super.initState();
   }
 
