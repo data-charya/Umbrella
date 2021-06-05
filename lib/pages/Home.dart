@@ -506,10 +506,9 @@ class _HomeState extends State<Home> {
                   ),
                   onPressed: () {
                     Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                            transitionDuration: Duration(milliseconds: 900),
-                            pageBuilder: (_, __, ___) => Week()));
+                      context,
+                      MaterialPageRoute(builder: (context) => Week()),
+                    );
                   },
                   child: Row(
                     children: [
